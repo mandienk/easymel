@@ -1,4 +1,10 @@
-<?php 
+<?php
+/**
+ * This example show you how simple is to generate your form from a batabase table.
+ * 
+ * Notice : For now it generates basic html form, but I will do my best to make it powerfull soon.
+ * For any suggestion : m.kakez@gmail.com
+ */
 
 // First we need to include necessary class
 require_once 'form/EasyMelFormGenerator.class.php';
