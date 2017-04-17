@@ -23,27 +23,12 @@ class _easyMFormGen extends EasyMelFormGenerator {
  */
 class EasyMelFormGenerator {
 
-	/*
-	private $databaseName;
-	private $tableName;
-	*/
 	private $params;
 	
 	public function __construct(iDatabase $database)
 	{
 		$this->params = $database->getParams();
-		/*
-		$this->databaseName = $databaseName;
-		$this->tableName = $tableName;
-		*/
 	}
-	/*
-	public function __construct($databaseName = null, $tableName = null)
-	{
-		$this->databaseName = $databaseName;
-		$this->tableName = $tableName;
-	}
-	*/
 	
 	/**
 	 * Function to get the table description
@@ -56,8 +41,6 @@ class EasyMelFormGenerator {
 			$this->tableName = $tableName;
 		}
 		
-		// $ct  = CopixDB::getConnection ($this->databaseName);
-		// $db = new Database ('angularjs', 'angularjs', 'angularjs1', 'localhost'); // TODO : Implement singleton
 		$db = new Database ($this->params->db, $this->params->user, $this->params->pass, $this->params->host); // TODO : Implement singleton
 		
 		$request = "SELECT * FROM information_schema.COLUMNS
@@ -67,7 +50,6 @@ class EasyMelFormGenerator {
 		$stmt = $db->getPdo()->prepare($request);
 		$stmt->execute();
 		$result = $stmt->fetchAll();
-		// $result = $ct->doQuery($request);
 		if(isset($result)){return $result;}else{return false;}
 	}
 

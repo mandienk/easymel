@@ -5,6 +5,7 @@
  */
 interface iDatabase {
 	public function getPdo ();
+	public function getParams ();
 }
 
 /**
@@ -13,15 +14,6 @@ interface iDatabase {
  */
 class Database implements iDatabase {
 
-	/*
-	private $host;
-	private $db;
-	private $user;
-	private $pass;
-	private $dsn;
-	private $pdo;
-	*/
-	
 	private $params;
 
 	/**
@@ -38,17 +30,7 @@ class Database implements iDatabase {
 		$this->params->db   = $db;
 		$this->params->user = $user;
 		$this->params->pass = $pass;
-		
-		/*
-		$this->host = $host;
-		$this->db   = $db;
-		$this->user = $user;
-		$this->pass = $pass;
-		*/
-
-		// echo $this->params->host;
-		// die();
-		
+				
 		$dsn = "mysql:host=".$this->params->host.";dbname=".$this->params->db;
 		$opt = [
 				PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Enable exception
