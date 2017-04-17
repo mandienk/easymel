@@ -81,7 +81,7 @@ class EasyMelFormGenerator {
 	 * array	$arNoFields the fields to ignore
 	 * array	$arMapFields the field labels (optional)
 	 * array	$arComboFields the drop-down lists (optional)
-	 * array	$arRelationFields thie field relations
+	 * array	$arRelationFields the field relations : NOT IMPLEMENTED!
 	 * array	$arDisabledFields the disabled fields
 	 * boolean	$disabled true/false allow to disable all the form fields
 	 * string	$plus allow to add a message, link, etc.
@@ -111,17 +111,6 @@ class EasyMelFormGenerator {
 				$fieldLabel = ucfirst(str_replace('_', ' ', $fieldLabel));
 				$fieldName = $value->COLUMN_NAME;				
 				$actionRelation = "";
-				// Add the field relation if defined
-				foreach($arRelationFields as $keyRelation => $valueRelation)
-				{
-					// echo "Colum name : ".$value->COLUMN_NAME." / id : ".$valueRelation[2]." => ";
-					$actionRelation = ($value->COLUMN_NAME == $valueRelation[2])? "on".$valueRelation[0].' = "javaScript:'.$valueRelation[1].'(\''.$valueRelation[2].'\', \''.$valueRelation[3].'\');"' : "";
-					$_SESSION[$valueRelation[2].$valueRelation[3].'-combo-fields'] = $arComboFields;
-					$_SESSION[$valueRelation[2].$valueRelation[3].'-relation-fields'] = $arRelationFields;
-					if($actionRelation) break;			
-					// $id = ($value->COLUMN_NAME == $valueRelation[2])? 'id="'.$valueRelation[2].'"' : (($value->COLUMN_NAME == $valueRelation[3])? 'id="'.$valueRelation[3].'"' : "");					
-					// echo "action relation : ".$actionRelation."<br />";
-				}
 				
 				if($checkIfDisabled)
 				{
@@ -134,43 +123,32 @@ class EasyMelFormGenerator {
 					}					
 				}					
 				
+				// If drop-down fields
 				if(array_key_exists($value->COLUMN_NAME, $arComboFields))
 				{
-					// print_r($arRelationFields);
-					// echo $actionRelation."<br />";				
-					// We disable the field if it is to zero value
-					if(isset($arData->$fieldName) && $arData->$fieldName == -1) // $fieldName == $value->COLUMN_NAME
-					{
-						$field = '<div id="'.$value->COLUMN_NAME.'" ><input '.$disabled.' type="text" disabled '.$actionRelation.' /><input type="hidden" value="-1" name="'.$value->COLUMN_NAME.'" size="15" /></div>';
-					}
-					else
-					{
-						// $arOption = _dao($arComboFields[$value->COLUMN_NAME], $this->databaseName)->findAll();
-						$db = new Database ($this->databaseName, $this->params->user, $this->params->pass, $this->params->host); // TODO : Implement singleton
-						
-						$request = "SELECT * FROM ".$arComboFields[$value->COLUMN_NAME];						
-						
-						$stmt = $db->getPdo()->prepare($request);
-						$stmt->execute();
-						$arOption = $stmt->fetchAll();
+					$db = new Database ($this->databaseName, $this->params->user, $this->params->pass, $this->params->host); // TODO : Implement singleton					
+					$request = "SELECT * FROM ".$arComboFields[$value->COLUMN_NAME];						
 					
-						$field = "<div id=\"".$fieldName."\" ><select ".$disabled." name=\"".$fieldName."\" ".$actionRelation." >";
-						$field .= "<option value=\"0\" >--choose ".$value->COLUMN_COMMENT."--</option>";
-						foreach($arOption as $keyOption => $valueOption)
-						{
-							$tmp = ((array)$valueOption);						
-							$myValue = array_shift($tmp);
-							$name = array_shift($tmp);						
-							$field .= "<option value=\"".$myValue."\" ".((isset($arData->$fieldName) && $arData->$fieldName == $myValue)?"selected":"")." >".$name."</option>";
-						}
-						$field .= "</select>".(($value->IS_NULLABLE == 'NO')?"&nbsp;<span style='color:red; font-weight:bold;'><img src='form/img/required.png' /> ":"").(isset($arError->$fieldName)? "<img src='form/img/required.png' /> ".$arError->$fieldName:"").'</span></div>';
+					$stmt = $db->getPdo()->prepare($request);
+					$stmt->execute();
+					$arOption = $stmt->fetchAll();
+				
+					$field = "<div id=\"".$fieldName."\" ><select ".$disabled." name=\"".$fieldName."\" ".$actionRelation." >";
+					$field .= "<option value=\"0\" >--choose ".$value->COLUMN_COMMENT."--</option>";
+					foreach($arOption as $keyOption => $valueOption)
+					{
+						$tmp = ((array)$valueOption);						
+						$myValue = array_shift($tmp);
+						$name = array_shift($tmp);						
+						$field .= "<option value=\"".$myValue."\" ".((isset($arData->$fieldName) && $arData->$fieldName == $myValue)?"selected":"")." >".$name."</option>";
 					}
+					$field .= "</select>".(($value->IS_NULLABLE == 'NO')?"&nbsp;<span style='color:red; font-weight:bold;'><img src='form/img/required.png' /> ":"").(isset($arError->$fieldName)? "<img src='form/img/required.png' /> ".$arError->$fieldName:"").'</span></div>';
 				}
-				else if($value->DATA_TYPE == "text")
+				else if($value->DATA_TYPE == "text") // Textarea
 				{
 					$field = '<div id="'.$value->COLUMN_NAME.'" ><textarea '.$disabled.' name="'.$value->COLUMN_NAME.'" rows="3" cols="40">'.(isset($arData->$fieldName)?$arData->$fieldName:"").'</textarea>'.(($value->IS_NULLABLE == 'NO')?"&nbsp;<span style='color:red; font-weight:bold;'><img src='"._resource ("img/required.png")."' /> ":"").(isset($arError->$fieldName)? "<img src='"._resource ("img/required.png")."' /> ".$arError->$fieldName:"").'</span></div>';
 				}
-				else
+				else // classical field : input tag
 				{
 					// echo $arData->$fieldName;
 					$field = '<div id="'.$value->COLUMN_NAME.'" ><input '.$disabled.' '.$actionRelation.' type="text" size="'.(is_null($value->CHARACTER_MAXIMUM_LENGTH)?"10":(($value->CHARACTER_MAXIMUM_LENGTH < 50)?"10":$value->CHARACTER_MAXIMUM_LENGTH/3)).'" value="'.(isset($arData->$fieldName)?$arData->$fieldName:"").'" name="'.$value->COLUMN_NAME.'" />'.(($value->IS_NULLABLE == 'NO')?"&nbsp;<span style='color:red; font-weight:bold;'><img src='form/img/required.png' /> ":"").(isset($arError->$fieldName)? "<img src='form/img/required.png' /> ".$arError->$fieldName:"").'</span></div>';
