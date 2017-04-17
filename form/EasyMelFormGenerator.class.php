@@ -1,7 +1,9 @@
 <?php
 /**
+ * This file contains all necessary stuff to generate form
  * @package		easymel
  * @subpackage	form
+ * @name		EasyMelFormGenerator (class name)
  * @author		Ma'ndien KAKEZ
  * @link		https://github.com/mandienk/easymel
  * @license		http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
@@ -14,7 +16,7 @@ require_once 'database/Database.class.php';
  * @subpackage	form
  */
 class _easyMFormGen extends EasyMelFormGenerator {
-
+	// Used as alias / shortname
 }
 
 /**
@@ -56,19 +58,22 @@ class EasyMelFormGenerator {
 	/*	 
 	 * Function to create a form from a database's table
 	 *
-	 * array	$arData	The field values
-	 * array	$arError Input errors (optional)
-	 * string	$databaseNane the database name (optional)
-	 * string	$tableName the database table name
-	 * array	$arNoFields the fields to ignore
-	 * array	$arMapFields the field labels (optional)
-	 * array	$arComboFields the drop-down lists (optional)
-	 * array	$arRelationFields the field relations : NOT IMPLEMENTED!
-	 * array	$arDisabledFields the disabled fields
-	 * boolean	$disabled true/false allow to disable all the form fields
-	 * string	$plus allow to add a message, link, etc.
+	 * object	$objData			The field values
+	 * array	$arError			Input errors (optional)
+	 * string	$databaseNane		the database name (optional)
+	 * string	$tableName			the database table name
+	 * array	$arNoFields			the fields to ignore
+	 * array	$arMapFields		the field labels (optional)
+	 * array	$arComboFields		the drop-down lists (optional)
+	 * array	$arRelationFields	the field relations : NOT IMPLEMENTED!
+	 * array	$arDisabledFields	the disabled fields
+	 * boolean	$disabled			true/false allow to disable all the form fields
+	 * string	$plus				allow to add a message, link, etc.
+	 * boolean	$noForm				true/false To add HTML form tag. default to false
+	 * string	$action				the action script
+	 * string	$method				post or get (optional)
 	 */
-	public function getFormFromTable($arData, $arError = null, $databaseName = null, $tableName = null, $arNoFields = array(), $arMapFields = array(), $arComboFields = array(), $arRelationFields = array(), $arDisabledFields = array(), $disabled = "", $plus = "")
+	public function getFormFromTable($objData, $arError = null, $databaseName = null, $tableName = null, $arNoFields = array(), $arMapFields = array(), $arComboFields = array(), $arRelationFields = array(), $arDisabledFields = array(), $disabled = "", $plus = "", $noForm = false, $action = "", $method = "")
 	{
 		$checkIfDisabled = false;
 		if(empty($disabled)) $checkIfDisabled = true;
@@ -81,7 +86,15 @@ class EasyMelFormGenerator {
 		}
 		
 		$arTableDescription = $this->getTableDescription($this->databaseName, $this->tableName);
-				
+		
+		// Adding form tag
+		$formTagStart = $formTagEnd = "";
+		if(!$noForm)
+		{
+			$formTagStart = "<form action = '".$action."' method = '".$method."'>";
+			$formTagEnd = "<input type='submit' value='submit'/></form>";
+		}
+		
 		foreach($arTableDescription as $key => $value)
 		{
 			// Excludes fields passed in parameters
@@ -92,7 +105,7 @@ class EasyMelFormGenerator {
 				// Deletes "_" and set to uppercase the first character
 				$fieldLabel = ucfirst(str_replace('_', ' ', $fieldLabel));
 				$fieldName = $value->COLUMN_NAME;				
-				$actionRelation = "";
+				$actionRelation = ""; // Not implemented
 				
 				if($checkIfDisabled)
 				{
@@ -122,17 +135,17 @@ class EasyMelFormGenerator {
 						$tmp = ((array)$valueOption);						
 						$myValue = array_shift($tmp);
 						$name = array_shift($tmp);						
-						$field .= "<option value=\"".$myValue."\" ".((isset($arData->$fieldName) && $arData->$fieldName == $myValue)?"selected":"")." >".$name."</option>";
+						$field .= "<option value=\"".$myValue."\" ".((isset($objData->$fieldName) && $objData->$fieldName == $myValue)?"selected":"")." >".$name."</option>";
 					}
 					$field .= "</select>".(($value->IS_NULLABLE == 'NO')?"&nbsp;<span style='color:red; font-weight:bold;'><img src='form/img/required.png' /> ":"").(isset($arError->$fieldName)? "<img src='form/img/required.png' /> ".$arError->$fieldName:"").'</span></div>';
 				}
 				else if($value->DATA_TYPE == "text") // Textarea
 				{
-					$field = '<div id="'.$value->COLUMN_NAME.'" ><textarea '.$disabled.' name="'.$value->COLUMN_NAME.'" rows="3" cols="40">'.(isset($arData->$fieldName)?$arData->$fieldName:"").'</textarea>'.(($value->IS_NULLABLE == 'NO')?"&nbsp;<span style='color:red; font-weight:bold;'><img src='"._resource ("img/required.png")."' /> ":"").(isset($arError->$fieldName)? "<img src='"._resource ("img/required.png")."' /> ".$arError->$fieldName:"").'</span></div>';
+					$field = '<div id="'.$value->COLUMN_NAME.'" ><textarea '.$disabled.' name="'.$value->COLUMN_NAME.'" rows="3" cols="40">'.(isset($objData->$fieldName)?$objData->$fieldName:"").'</textarea>'.(($value->IS_NULLABLE == 'NO')?"&nbsp;<span style='color:red; font-weight:bold;'><img src='"._resource ("img/required.png")."' /> ":"").(isset($arError->$fieldName)? "<img src='"._resource ("img/required.png")."' /> ".$arError->$fieldName:"").'</span></div>';
 				}
 				else // classical field : input tag
 				{
-					$field = '<div id="'.$value->COLUMN_NAME.'" ><input '.$disabled.' '.$actionRelation.' type="text" size="'.(is_null($value->CHARACTER_MAXIMUM_LENGTH)?"10":(($value->CHARACTER_MAXIMUM_LENGTH < 50)?"10":$value->CHARACTER_MAXIMUM_LENGTH/3)).'" value="'.(isset($arData->$fieldName)?$arData->$fieldName:"").'" name="'.$value->COLUMN_NAME.'" />'.(($value->IS_NULLABLE == 'NO')?"&nbsp;<span style='color:red; font-weight:bold;'><img src='form/img/required.png' /> ":"").(isset($arError->$fieldName)? "<img src='form/img/required.png' /> ".$arError->$fieldName:"").'</span></div>';
+					$field = '<div id="'.$value->COLUMN_NAME.'" ><input '.$disabled.' '.$actionRelation.' type="text" size="'.(is_null($value->CHARACTER_MAXIMUM_LENGTH)?"10":(($value->CHARACTER_MAXIMUM_LENGTH < 50)?"10":$value->CHARACTER_MAXIMUM_LENGTH/3)).'" value="'.(isset($objData->$fieldName)?$objData->$fieldName:"").'" name="'.$value->COLUMN_NAME.'" />'.(($value->IS_NULLABLE == 'NO')?"&nbsp;<span style='color:red; font-weight:bold;'><img src='form/img/required.png' /> ":"").(isset($arError->$fieldName)? "<img src='form/img/required.png' /> ".$arError->$fieldName:"").'</span></div>';
 				}
 				
 				$rows .= '<tr>
@@ -142,6 +155,6 @@ class EasyMelFormGenerator {
 			}
 		}
 		
-		return $plus."<table>".$rows."</table>";
+		return $plus.$formTagStart."<table>".$rows."</table>".$formTagEnd;
 	}
 }

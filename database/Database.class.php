@@ -1,16 +1,22 @@
 <?php
+/**
+ * Provides action with database
+ * @author	Ma'ndien KAKEZ (m.kakez@gmail.com)
+ */
 
 /**
  * Interface for database class
  */
 interface iDatabase {
+	public function get ($tableName, $fieldName, $value);
 	public function getPdo ();
 	public function getParams ();
 }
 
 /**
- * Class for database actions
- * @author Mandien
+ * Class for database actions 
+ * 
+ * Notice : you can implement your own dabatase class according to iDatabase interface
  */
 class Database implements iDatabase {
 
@@ -42,11 +48,37 @@ class Database implements iDatabase {
 		}
 	}
 	
+	/**
+	 * Function to get data from table
+	 * @param string	$tableName
+	 * @param string	$fieldName
+	 * @param integer	$id
+	 */
+	public function get ($tableName, $fieldName, $value)
+	{		
+		$request = "SELECT * FROM ".$tableName." WHERE ".$fieldName." = :value";				
+		$stmt = $this->getPdo()->prepare($request);
+		$stmt->bindParam (':value', $value, PDO::PARAM_INT);		
+		$stmt->execute();
+		$result = $stmt->fetchAll();
+		// We store the data into the values attribute according to the getFormFromTable () definition
+		$obj = new stdClass();
+		$obj->objValues = new stdClass();
+		$obj->objValues = (isset($result[0]))? $result[0] : null;
+		return $obj;
+	}
+	
+	/**
+	 * Function to get all parameters
+	 */
 	public function getParams ()
 	{
 		return $this->params;
 	}
 
+	/**
+	 * Function to get the PDO connection object
+	 */
 	public function getPdo ()
 	{
 		return $this->pdo;
