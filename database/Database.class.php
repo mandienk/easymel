@@ -16,13 +16,6 @@ class Database implements iDatabase {
 
 	private $params;
 
-	/**
-	 *
-	 * @param string $db
-	 * @param string $user
-	 * @param string $pass
-	 * @param string $host
-	 */
 	public function __construct($db, $user, $pass, $host = "localhost")
 	{
 		$this->params = new stdClass();
