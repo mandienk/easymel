@@ -17,21 +17,33 @@ class _easyMFormGen extends EasyMelFormGenerator {
 
 }
 
-
 /**
  * @package		easymel
  * @subpackage	form
  */
 class EasyMelFormGenerator {
 
+	/*
 	private $databaseName;
 	private $tableName;
+	*/
+	private $params;
 	
+	public function __construct(iDatabase $database)
+	{
+		$this->params = $database->getParams();
+		/*
+		$this->databaseName = $databaseName;
+		$this->tableName = $tableName;
+		*/
+	}
+	/*
 	public function __construct($databaseName = null, $tableName = null)
 	{
 		$this->databaseName = $databaseName;
 		$this->tableName = $tableName;
 	}
+	*/
 	
 	/**
 	 * Function to get the table description
@@ -45,7 +57,8 @@ class EasyMelFormGenerator {
 		}
 		
 		// $ct  = CopixDB::getConnection ($this->databaseName);
-		$db = new Database ('angularjs', 'angularjs', 'angularjs1', 'localhost'); // TODO : Implement singleton
+		// $db = new Database ('angularjs', 'angularjs', 'angularjs1', 'localhost'); // TODO : Implement singleton
+		$db = new Database ($this->params->db, $this->params->user, $this->params->pass, $this->params->host); // TODO : Implement singleton
 		
 		$request = "SELECT * FROM information_schema.COLUMNS
 					WHERE TABLE_SCHEMA = '".$this->databaseName."'
@@ -132,10 +145,17 @@ class EasyMelFormGenerator {
 					}
 					else
 					{
-						$arOption = _dao($arComboFields[$value->COLUMN_NAME], $this->databaseName)->findAll();
+						// $arOption = _dao($arComboFields[$value->COLUMN_NAME], $this->databaseName)->findAll();
+						$db = new Database ($this->databaseName, $this->params->user, $this->params->pass, $this->params->host); // TODO : Implement singleton
+						
+						$request = "SELECT * FROM ".$arComboFields[$value->COLUMN_NAME];						
+						
+						$stmt = $db->getPdo()->prepare($request);
+						$stmt->execute();
+						$arOption = $stmt->fetchAll();
 					
 						$field = "<div id=\"".$fieldName."\" ><select ".$disabled." name=\"".$fieldName."\" ".$actionRelation." >";
-						$field .= "<option value=\"0\" >--choix ".$value->COLUMN_COMMENT."--</option>";
+						$field .= "<option value=\"0\" >--choose ".$value->COLUMN_COMMENT."--</option>";
 						foreach($arOption as $keyOption => $valueOption)
 						{
 							$tmp = ((array)$valueOption);						
@@ -143,12 +163,12 @@ class EasyMelFormGenerator {
 							$name = array_shift($tmp);						
 							$field .= "<option value=\"".$myValue."\" ".((isset($arData->$fieldName) && $arData->$fieldName == $myValue)?"selected":"")." >".$name."</option>";
 						}
-						$field .= "</select>".(($value->IS_NULLABLE == 'NO')?"&nbsp;<span style='color:red; font-weight:bold;'><img src='"._resource ("img/shared/required.png")."' /> ":"").(isset($arError->$fieldName)? "<img src='"._resource ("img/shared/required.gif")."' /> ".$arError->$fieldName:"").'</span></div>';
+						$field .= "</select>".(($value->IS_NULLABLE == 'NO')?"&nbsp;<span style='color:red; font-weight:bold;'><img src='form/img/required.png' /> ":"").(isset($arError->$fieldName)? "<img src='form/img/required.png' /> ".$arError->$fieldName:"").'</span></div>';
 					}
 				}
 				else if($value->DATA_TYPE == "text")
 				{
-					$field = '<div id="'.$value->COLUMN_NAME.'" ><textarea '.$disabled.' name="'.$value->COLUMN_NAME.'" rows="3" cols="40">'.(isset($arData->$fieldName)?$arData->$fieldName:"").'</textarea>'.(($value->IS_NULLABLE == 'NO')?"&nbsp;<span style='color:red; font-weight:bold;'><img src='"._resource ("img/shared/required.png")."' /> ":"").(isset($arError->$fieldName)? "<img src='"._resource ("img/shared/required.gif")."' /> ".$arError->$fieldName:"").'</span></div>';
+					$field = '<div id="'.$value->COLUMN_NAME.'" ><textarea '.$disabled.' name="'.$value->COLUMN_NAME.'" rows="3" cols="40">'.(isset($arData->$fieldName)?$arData->$fieldName:"").'</textarea>'.(($value->IS_NULLABLE == 'NO')?"&nbsp;<span style='color:red; font-weight:bold;'><img src='"._resource ("img/required.png")."' /> ":"").(isset($arError->$fieldName)? "<img src='"._resource ("img/required.png")."' /> ".$arError->$fieldName:"").'</span></div>';
 				}
 				else
 				{
