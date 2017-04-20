@@ -4,6 +4,7 @@
  * 
  * Notice : For now it generates basic html form, but I will do my best to make it powerfull soon.
  * For any suggestion : m.kakez@gmail.com
+ * TODO : use Database class everywhere instead of use native PDO declaration
  */
 
 // First we need to include necessary class
@@ -21,8 +22,8 @@ $easy = new _easyMFormGen($db);
 echo $easy->getFormFromTable(
 		(isset($obj->objValues)? $obj->objValues : null), // field values object
 		(isset($obj->arErrorsProduit)?(object)$obj->arErrorsProduit:null), // Errors : Convert error array to object
-		'test', // database name
-		'users', // table name
+		'test', // database name : TODO : use database class
+		'users', // table name : TODO : use database class
 		array('user_id'), // Fields to hide
 		array('[FIELD_ID]' => '[LABEL]'), // Labels to display
 		array('sex' => 'sex',
